@@ -130,7 +130,7 @@ git push origin main
     else:
         help = f"""You should now do:
 
-git commit -m "Add wrapper.py files for tag {tag} ."
+git commit -m "Add wrapper.py files for tag {tag}" . 
 git tag {tag}
 git push origin main
 git push origin {tag}
