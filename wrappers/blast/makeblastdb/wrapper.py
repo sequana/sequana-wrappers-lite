@@ -21,7 +21,7 @@ shell(
     "makeblastdb"
     " -in {snakemake.input.fasta}"
     " -dbtype {db_type}"
-    " {snakemake.params.options}"
+    " {snakemake.params}"
     " -logfile {log}"
     " -out {out_name}"
 )

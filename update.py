@@ -11,7 +11,7 @@ class Wrapper:
     def __init__(self):
         self._path = "temporary_wrappers"
 
-    def run(self, tag=None):
+    def run(self, tag="main"):
         try:
             self.clone(tag=tag)
             self.copy_wrappers()
@@ -23,10 +23,11 @@ class Wrapper:
         return self._path
     repo_path = property(_get_path)
 
-    def clone(self, tag=None):
+    def clone(self, tag="main"):
         # clone the directory
         repo_path = Path(self.repo_path)
 
+        # main and latest version
         if not repo_path.exists():
             print(f"Cloning sequana-wrappers into {repo_path}")
             repo_path.parent.mkdir(parents=True, exist_ok=True)
@@ -35,12 +36,13 @@ class Wrapper:
                 "https://github.com/sequana/sequana-wrappers.git",
                 "temporary_wrappers"
             ], check=True)
-        if tag:
+
+        if tag and tag!= "main":
             print(f"Fetching tags and checking out tag: {tag}")
             subprocess.run(["git", "fetch", "--tags"], cwd=repo_path, check=True)
             subprocess.run(["git", "checkout", f"tags/{tag}", "-b", f"{tag}"], cwd=repo_path, check=True)
         else:
-            print("Pulling latest changes from main") 
+            print("Pulling latest changes from main")
             subprocess.run(["git", "pull"], cwd=repo_path, check=True)
 
         return repo_path
@@ -87,27 +89,37 @@ class Wrapper:
 
 
 @click.command()
-@click.option("--tag", type=click.STRING, default=None)
+@click.option("--tag", type=click.STRING, required=True, help="must be set to 'main' or valid tag. type dummy one to get a valid list")
 def main(**kwargs):
 
     w = Wrapper()
     w.clone()
     tags = w.get_tags()
     tag = kwargs['tag']
-    if tag not in tags:
+
+    if tag == "main":
+        pass
+    elif tag not in tags:
         print(f"must use a valid tag. choose one of {tags}")
+        return
     w.run(tag=tag)
 
-    print("See README.md for the next step. you should commit, and tag the current repo.")
+    print("See README.md for the next steps")
 
-    help = f"""You should now do:
+    if tag == "main":
+        help = """
+git commit -m "update main branch"
+git push origin main
+"""
+    else:
+        help = f"""You should now do:
 
-git commit-m "Add wrapper.py files for tag {tag}"
+git commit -m "Add wrapper.py files for tag {tag}"
 git tag {tag}
 git push origin main
 git push origin {tag}
 """
-
+    print(help)
 
 
 if __name__ == '__main__':

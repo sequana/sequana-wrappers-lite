@@ -14,6 +14,9 @@ import os
 
 from snakemake.shell import shell
 
+from sequana.bedtools import GenomeCov
+from sequana.modules_report.coverage import CoverageModule
+from sequana.utils import config
 
 # Get rule information (input/output/params...)
 
