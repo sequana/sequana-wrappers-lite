@@ -26,7 +26,7 @@ output_html = snakemake.output[0]
 report_dir = output_html.rsplit("/", 1)[0]
 
 # default values from sequana_coverage
-annotation = snakemake.input.get("annotation_file", None)
+annotation = snakemake.params.get("annotation", None)
 circular = snakemake.params.get("circular", True)
 chunksize = snakemake.params.get("chunksize", 5000000)
 double_threshold = snakemake.params.get("double_threshold", 0.5)
@@ -42,7 +42,7 @@ output_directory = snakemake.params.get("output_directory", "report")
 cmd = f"sequana_coverage --input-file {input_bed} -H {high} -L {low} "\
        "--clustering-parameter {double_threshold} --chunk-size {chunksize} "\
        "--window-gc {gc_window_size} --mixture-models {params_k} "\
-       "--output-directory {output_directory} "
+       "--output-directory {output_directory} --window-median {window_size}"
 
 if circular:
     cmd += " -o "
