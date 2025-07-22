@@ -48,6 +48,18 @@ class Wrapper:
         return repo_path
 
     def get_tags(self):
+        result = subprocess.run(
+            ["git", "tag"],
+            cwd=".",
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        tags = result.stdout.strip().splitlines()
+        return tags
+
+    def get_origin_tags(self):
         # Get tags
         if not Path(self.repo_path).exists():
             self.clone()
@@ -94,13 +106,17 @@ def main(**kwargs):
 
     w = Wrapper()
     w.clone()
-    tags = w.get_tags()
+    origin_tags = w.get_origin_tags()
+    local_tags = w.get_tags()
     tag = kwargs['tag']
 
     if tag == "main":
         pass
-    elif tag not in tags:
-        print(f"must use a valid tag. choose one of {tags}")
+    elif tag in local_tags:
+        print(f"{tag} is already within the repository. Nothing to do.")    
+        return
+    elif tag not in origin_tags:
+        print(f"must use a valid tag. choose one of {origin_tags}")
         return
     w.run(tag=tag)
 
@@ -114,7 +130,7 @@ git push origin main
     else:
         help = f"""You should now do:
 
-git commit -m "Add wrapper.py files for tag {tag}"
+git commit -m "Add wrapper.py files for tag {tag} ."
 git tag {tag}
 git push origin main
 git push origin {tag}
