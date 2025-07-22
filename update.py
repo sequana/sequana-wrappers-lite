@@ -1,15 +1,23 @@
 from pathlib import Path
 import subprocess
 import shutil
+
+import rich_click as click
+
+
+
 class Wrapper:
 
     def __init__(self):
         self._path = "temporary_wrappers"
 
-    def run(self):
-        self.clone()
-        self.copy_wrappers()
-        self.teardown()
+    def run(self, tag=None):
+        try:
+            self.clone(tag=tag)
+            self.copy_wrappers()
+            self.teardown()
+        except:
+            self.teardown()
 
     def _get_path(self):
         return self._path
@@ -37,6 +45,24 @@ class Wrapper:
 
         return repo_path
 
+    def get_tags(self):
+        # Get tags
+        if not Path(self.repo_path).exists():
+            self.clone()
+
+        result = subprocess.run(
+            ["git", "tag"],
+            cwd=self.repo_path,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        tags = result.stdout.strip().splitlines()
+        # some tags are obviously wrong. we accept only those starting with vX.Y.Z
+        tags = [x for x in tags if x.startswith('v')]
+        return tags
+
     def copy_wrappers(self, destination="."):
         # copy the wrappers
         source_root = Path(self.repo_path)
@@ -47,8 +73,43 @@ class Wrapper:
             dest_path = destination_root / relative_path
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(wrapper_file, dest_path)
+        for wrapper_file in source_root.rglob("environment.yaml"):
+            relative_path = wrapper_file.relative_to(source_root)
+            dest_path = destination_root / relative_path
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(wrapper_file, dest_path)
 
     def teardown(self):
         # just suppress the clone
         shutil.rmtree(self.repo_path)
+
+
+
+
+@click.command()
+@click.option("--tag", type=click.STRING, default=None)
+def main(**kwargs):
+
+    w = Wrapper()
+    w.clone()
+    tags = w.get_tags()
+    tag = kwargs['tag']
+    if tag not in tags:
+        print(f"must use a valid tag. choose one of {tags}")
+    w.run(tag=tag)
+
+    print("See README.md for the next step. you should commit, and tag the current repo.")
+
+    help = f"""You should now do:
+
+git commit-m "Add wrapper.py files for tag {tag}"
+git tag {tag}
+git push origin main
+git push origin {tag}
+"""
+
+
+
+if __name__ == '__main__':
+    main()
 
